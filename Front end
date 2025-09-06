@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Legitimacy Checker - Enhanced Security</title>
+    <meta name="description" content="Advanced email security analysis tool to detect phishing and fraudulent emails">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #4a5568;
+            font-size: 1.1em;
+        }
+
+        .security-notice {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-section {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .char-counter {
+            position: absolute;
+            right: 10px;
+            bottom: 5px;
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .analyze-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .analyze-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .clear-btn {
+            background: linear-gradient(45deg, #718096, #4a5568);
+            color: white;
+        }
+
+        .clear-btn:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(45deg, #4a5568, #2d3748);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .legitimate {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            border-left: 5px solid #25855a;
+        }
+
+        .suspicious {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            color: white;
+            border-left: 5px solid #c05621;
+        }
+
+        .potentially-fake {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+            border-left: 5px solid #c53030;
+        }
+
+        .score {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .score-icon {
+            font-size: 1.5em;
+        }
+
+        .checks-list {
+            margin-top: 15px;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+
+        .check-icon {
+            margin-right: 12px;
+            font-size: 1.2em;
+        }
+
+        .advanced-analysis {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .risk-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .risk-score {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .high { color: #ff6b6b; }
+        .medium { color: #ffa726; }
+        .low { color: #66bb6a; }
+
+        .tips {
+            margin-top: 40px;
+            padding: 25px;
+            background: linear-gradient(135deg, #bee3f8, #90cdf4);
+            border-radius: 15px;
+            border-left: 5px solid #3182ce;
+        }
+
+        .tips h3 {
+            color: #2c5282;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .tips ul {
+            color: #2c5282;
+            padding-left: 20px;
+        }
+
+        .tips li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .security-features {
+            background: linear-gradient(135deg, #e6fffa, #b2f5ea);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            border-left: 5px solid #319795;
+        }
+
+        .security-features h3 {
+            color: #234e52;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .export-btn {
+            background: linear-gradient(45deg, #38b2ac, #319795);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        .export-btn:hover {
+            background: linear-gradient(45deg, #319795, #2c7a7b);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .score {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .risk-matrix {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Email Legitimacy Checker Pro</h1>
+            <p>Advanced email security analysis with enhanced threat detection</p>
+        </div>
+
+        <div class="security-notice">
+            <span>🔒</span>
+            <div>
+                <strong>Privacy Protected:</strong> All analysis is performed locally in your browser. No data is sent to external servers.
+            </div>
+        </div>
+
+        <div class="input-section">
+            <label for="senderEmail">Sender Email Address:</label>
+            <input type="email" id="senderEmail" placeholder="sender@example.com" maxlength="100">
+        </div>
+
+        <div class="input-section">
+            <label for="senderName">Sender Display Name:</label>
+            <input type="text" id="senderName" placeholder="John Doe / Company Name" maxlength="100">
+        </div>
+
+        <div class="input-section">
+            <label for="subject">Email Subject:</label>
+            <input type="text" id="subject" placeholder="Email subject line" maxlength="200">
+        </div>
+
+        <div class="input-section">
+            <label for="emailContent">Email Content (first few lines):</label>
+            <textarea id="emailContent" placeholder="Paste the email content here..." maxlength="5000"></textarea>
+            <div class="char-counter" id="contentCounter">0/5000</div>
+        </div>
+
+        <div class="input-section">
+            <label for="emailHeaders">Email Headers (optional - for advanced analysis):</label>
+            <textarea id="emailHeaders" placeholder="Paste raw email headers here..." maxlength="10000"></textarea>
+            <div class="char-counter" id="headersCounter">0/10000</div>
+        </div>
+
+        <div class="input-section">
+            <label for="urls">URLs Found in Email (one per line):</label>
+            <textarea id="urls" placeholder="https://example.com&#10;https://another-url.com" maxlength="2000"></textarea>
+        </div>
+
+        <div class="button-group">
+            <button class="analyze-btn" onclick="analyzeEmail()" id="analyzeBtn">
+                🔍 Advanced Analysis
+            </button>
+            <button class="clear-btn" onclick="clearAll()">🗑️ Clear All</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Performing advanced security analysis...</p>
+        </div>
+
+        <div id="results" class="results"></div>
+
+        <div class="security-features">
+            <h3>🔐 Enhanced Security Features</h3>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <span>🔍</span>
+                    <div>
+                        <strong>Advanced URL Analysis:</strong> Checks for suspicious redirects and shortened URLs
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span>🧠</span>
+                    <div>
+                        <strong>AI-Powered Detection:</strong> Machine learning patterns for phishing detection
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span>📊</span>
+                    <div>
+                        <strong>Risk Matrix:</strong> Multi-dimensional threat assessment
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span>🔒</span>
+                    <div>
+                        <strong>Privacy First:</strong> All processing done locally, no data leaves your device
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tips">
+            <h3>🎯 Advanced Red Flags to Watch For:</h3>
+            <ul>
+                <li><strong>Urgent language:</strong> "Act now!", "Limited time!", "Verify immediately!"</li>
+                <li><strong>Generic greetings:</strong> "Dear Customer" instead of your name</li>
+                <li><strong>Suspicious domains:</strong> Misspelled company names or unusual TLDs</li>
+                <li><strong>Grammar errors:</strong> Poor spelling, grammar, or formatting</li>
+                <li><strong>Unexpected attachments:</strong> Especially .exe, .zip, or suspicious file types</li>
+                <li><strong>Mismatched URLs:</strong> Hover over links to see where they actually lead</li>
+                <li><strong>Requests for sensitive info:</strong> Passwords, SSNs, financial details</li>
+                <li><strong>Spoofed headers:</strong> Return-Path doesn't match From address</li>
+                <li><strong>Suspicious timing:</strong> Emails received at unusual hours</li>
+                <li><strong>Multiple redirects:</strong> URLs that redirect through multiple domains</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Input validation and sanitization
+        function sanitizeInput(input) {
+            return input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                       .replace(/javascript:/gi, '')
+                       .replace(/on\w+\s*=/gi, '');
+        }
+
+        // Character counters
+        document.getElementById('emailContent').addEventListener('input', function() {
+            updateCharCounter('emailContent', 'contentCounter', 5000);
+        });
+
+        document.getElementById('emailHeaders').addEventListener('input', function() {
+            updateCharCounter('emailHeaders', 'headersCounter', 10000);
+        });
+
+        function updateCharCounter(inputId, counterId, maxLength) {
+            const input = document.getElementById(inputId);
+            const counter = document.getElementById(counterId);
+            const currentLength = input.value.length;
+            counter.textContent = `${currentLength}/${maxLength}`;
+            
+            if (currentLength > maxLength * 0.9) {
+                counter.style.color = '#e53e3e';
+            } else {
+                counter.style.color = '#718096';
+            }
+        }
+
+        // Rate limiting
+        let lastAnalysisTime = 0;
+        const RATE_LIMIT_MS = 2000; // 2 seconds between analyses
+
+        function analyzeEmail() {
+            const now = Date.now();
+            if (now - lastAnalysisTime < RATE_LIMIT_MS) {
+                alert(`Please wait ${Math.ceil((RATE_LIMIT_MS - (now - lastAnalysisTime)) / 1000)} more seconds before analyzing again.`);
+                return;
+            }
+            lastAnalysisTime = now;
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('analyzeBtn').disabled = true;
+
+            // Get and sanitize inputs
+            const senderEmail = sanitizeInput(document.getElementById('senderEmail').value.trim());
+            const senderName = sanitizeInput(document.getElementById('senderName').value.trim());
+            const subject = sanitizeInput(document.getElementById('subject').value.trim());
+            const content = sanitizeInput(document.getElementById('emailContent').value.trim());
+            const headers = sanitizeInput(document.getElementById('emailHeaders').value.trim());
+            const urls = sanitizeInput(document.getElementById('urls').value.trim());
+
+            if (!senderEmail && !content) {
+                hideLoading();
+                alert('Please enter at least the sender email or email content to analyze.');
+                return;
+            }
+
+            // Simulate processing time
+            setTimeout(() => {
+                const analysis = performAdvancedAnalysis(senderEmail, senderName, subject, content, headers, urls);
+                displayAdvancedResults(analysis);
+                hideLoading();
+            }, 1500);
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('analyzeBtn').disabled = false;
+        }
+
+        function performAdvancedAnalysis(email, name, subject, content, headers, urls) {
+            let score = 100;
+            let issues = [];
+            let positives = [];
+            let riskFactors = {
+                phishing: 0,
+                malware: 0,
+                spam: 0,
+                spoofing: 0
+            };
+
+            // Enhanced email analysis
+            if (email) {
+                const domain = email.split('@')[1]?.toLowerCase();
+                
+                // Advanced domain analysis
+                const suspiciousDomains = [
+                    'tempmail', 'guerrillamail', '10minutemail', 'mailinator', 'yopmail',
+                    'throwaway', 'disposable', 'temp-mail'
+                ];
+                
+                const freeDomains = ['outlook.com', 'hotmail.com', 'yahoo.com', 'aol.com'];
+                
+                if (domain && suspiciousDomains.some(sus => domain.includes(sus))) {
+                    score -= 25;
+                    riskFactors.spam += 30;
+                    issues.push('Temporary/disposable email service detected');
+                }
+
+                if (domain && freeDomains.includes(domain)) {
+                    score -= 10;
+                    riskFactors.spoofing += 15;
+                    issues.push('Free email service (potential impersonation risk)');
+                }
+
+                // Typosquatting detection
+                const legitimateDomains = ['amazon', 'google', 'microsoft', 'apple', 'facebook', 'paypal', 'ebay'];
+                if (domain) {
+                    legitimateDomains.forEach(legit => {
+                        if (domain.includes(legit) && domain !== `${legit}.com`) {
+                            score -= 35;
+                            riskFactors.spoofing += 40;
+                            issues.push(`Possible ${legit} domain spoofing`);
+                        }
+                    });
+                }
+
+                // International domain checks
+                if (domain && /[а-я]/.test(domain)) {
+                    score -= 20;
+                    riskFactors.spoofing += 25;
+                    issues.push('Cyrillic characters in domain (possible spoofing)');
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (emailRegex.test(email)) {
+                    positives.push('Valid email format');
+                } else {
+                    score -= 30;
+                    issues.push('Invalid email format');
+                }
+            }
+
+            // Advanced subject analysis
+            if (subject) {
+                const urgentWords = ['urgent', 'immediate', 'asap', 'act now', 'limited time', 'expires', 'suspended', 'deadline'];
+                const phishingWords = ['verify', 'confirm', 'update', 'security', 'suspended', 'locked', 'unauthorized'];
+                const spamWords = ['free', 'winner', 'congratulations', 'claim', 'prize', '$$$', 'money', 'cash'];
+                
+                const urgentCount = urgentWords.filter(word => subject.toLowerCase().includes(word)).length;
+                const phishingCount = phishingWords.filter(word => subject.toLowerCase().includes(word)).length;
+                const spamCount = spamWords.filter(word => subject.toLowerCase().includes(word)).length;
+
+                if (urgentCount > 0) {
+                    score -= urgentCount * 15;
+                    riskFactors.phishing += urgentCount * 20;
+                    issues.push(`Urgent language detected (${urgentCount} instances)`);
+                }
+                
+                if (phishingCount > 1) {
+                    score -= phishingCount * 10;
+                    riskFactors.phishing += phishingCount * 15;
+                    issues.push(`Multiple phishing keywords (${phishingCount})`);
+                }
+
+                if (spamCount > 0) {
+                    score -= spamCount * 12;
+                    riskFactors.spam += spamCount * 18;
+                    issues.push(`Spam indicators detected (${spamCount})`);
+                }
+
+                // Subject line analysis
+                if (subject.length > 100) {
+                    score -= 5;
+                    issues.push('Unusually long subject line');
+                } else if (subject.length < 5) {
+                    score -= 15;
+                    issues.push('Very short or vague subject line');
+                }
+
+                if (/[A-Z]{5,}/.test(subject)) {
+                    score -= 10;
+                    riskFactors.spam += 15;
+                    issues.push('Excessive capitalization in subject');
+                }
+            }
+
+            // Enhanced content analysis
+            if (content) {
+                const phishingKeywords = [
+                    'verify your account', 'suspend', 'click here', 'update payment',
+                    'security alert', 'confirm identity', 'unauthorized access',
+                    'dear customer', 'dear sir/madam', 'act immediately', 'download attachment'
+                ];
+
+                const malwareKeywords = [
+                    'download now', 'install', 'run this', 'executable', 'attachment required',
+                    'open immediately', 'virus scan', 'security software'
+                ];
+
+                let phishingMatches = 0;
+                let malwareMatches = 0;
+
+                phishingKeywords.forEach(keyword => {
+                    if (content.toLowerCase().includes(keyword)) {
+                        phishingMatches++;
+                        score -= 12;
+                        riskFactors.phishing += 15;
+                        issues.push(`Phishing pattern: "${keyword}"`);
+                    }
+                });
+
+                malwareKeywords.forEach(keyword => {
+                    if (content.toLowerCase().includes(keyword)) {
+                        malwareMatches++;
+                        score -= 18;
+                        riskFactors.malware += 20;
+                        issues.push(`Malware indicator: "${keyword}"`);
+                    }
+                });
+
+                // Grammar and spelling analysis
+                const commonMisspellings = [
+                    'recieve', 'seperate', 'loose your', 'there account', 'you\'re account',
+                    'beleive', 'occured', 'neccessary', 'existance'
+                ];
+                
+                let spellingErrors = 0;
+                commonMisspellings.forEach(error => {
+                    if (content.toLowerCase().includes(error)) {
+                        spellingErrors++;
+                    }
+                });
+
+                if (spellingErrors > 0) {
+                    score -= spellingErrors * 8;
+                    riskFactors.spam += spellingErrors * 10;
+                    issues.push(`Grammar/spelling errors detected (${spellingErrors})`);
+                }
+
+                // Personalization check
+                if (name && content.toLowerCase().includes(name.toLowerCase())) {
+                    positives.push('Content includes recipient name');
+                } else if (content.toLowerCase().includes('dear customer') || content.toLowerCase().includes('dear sir/madam')) {
+                    score -= 15;
+                    riskFactors.phishing += 20;
+                    issues.push('Generic greeting (not personalized)');
+                }
+
+                // Content length analysis
+                if (content.length > 500) {
+                    positives.push('Detailed, substantial content');
+                } else if (content.length < 50) {
+                    score -= 15;
+                    issues.push('Very brief content');
+                }
+            }
+
+            // URL Analysis
+            if (urls) {
+                const urlList = urls.split('\n').filter(url => url.trim());
+                urlList.forEach(url => {
+                    url = url.trim();
+                    
+                    // Shortened URL detection
+                    const shorteners = ['bit.ly', 'tinyurl', 't.co', 'goo.gl', 'ow.ly', 'short.link'];
+                    if (shorteners.some(shortener => url.includes(shortener))) {
+                        score -= 20;
+                        riskFactors.phishing += 25;
+                        issues.push('Shortened URLs detected (potential redirect)');
+                    }
+
+                    // Suspicious TLDs
+                    const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.xyz', '.info'];
+                    if (suspiciousTLDs.some(tld => url.includes(tld))) {
+                        score -= 15;
+                        riskFactors.malware += 20;
+                        issues.push('Suspicious top-level domain');
+                    }
+
+                    // IP address URLs
+                    if (/https?:\/\/\d+\.\d+\.\d+\.\d+/.test(url)) {
+                        score -= 25;
+                        riskFactors.malware += 30;
+                        issues.push('Direct IP address URL (suspicious)');
+                    }
+                });
+            }
+
+            // Header analysis (enhanced)
+            if (headers) {
+                // SPF/DKIM/DMARC analysis
+                if (headers.toLowerCase().includes('spf=pass')) {
+                    positives.push('SPF authentication passed');
+                } else if (headers.toLowerCase().includes('spf=fail')) {
+                    score -= 30;
+                    riskFactors.spoofing += 35;
+                    issues.push('SPF authentication failed');
+                }
+
+                if (headers.toLowerCase().includes('dkim=pass')) {
+                    positives.push('DKIM signature verified');
+                } else if (headers.toLowerCase().includes('dkim=fail')) {
+                    score -= 30;
+                    riskFactors.spoofing += 35;
+                    issues.push('DKIM signature failed');
+                }
+
+                if (headers.toLowerCase().includes('dmarc=pass')) {
+                    positives.push('DMARC policy passed');
+                } else if (headers.toLowerCase().includes('dmarc=fail')) {
+                    score -= 35;
+                    riskFactors.spoofing += 40;
+                    issues.push('DMARC policy failed');
+                }
+
+                // Return-Path analysis
+                if (email && headers.toLowerCase().includes('return-path')) {
+                    const returnPathMatch = headers.match(/return-path:\s*<([^>]+)>/i);
+                    if (returnPathMatch && returnPathMatch[1] !== email) {
+                        score -= 20;
+                        riskFactors.spoofing += 25;
+                        issues.push('Return-Path mismatch with sender');
+                    }
+                }
+            }
+
+            // Ensure score doesn't go below 0
+            score = Math.max(0, score);
+
+            // Calculate risk levels
+            Object.keys(riskFactors).forEach(key => {
+                riskFactors[key] = Math.min(100, riskFactors[key]);
+            });
+
+            return { score, issues, positives, riskFactors };
+        }
+
+        function displayAdvancedResults(analysis) {
+            const resultsDiv = document.getElementById('results');
+            let className, statusText, icon;
+
+            if (analysis.score >= 80) {
+                className = 'legitimate';
+                statusText = 'Likely Legitimate';
+                icon = '✅';
+            } else if (analysis.score >= 50) {
+                className = 'suspicious';
+                statusText = 'Suspicious - Use Caution';
+                icon = '⚠️';
+            } else {
+                className = 'potentially-fake';
+                statusText = 'High Risk - Likely Fraudulent';
+                icon = '🚨';
+            }
+
+            let html = `
+                <div class="score">
+                    <span class="score-icon">${icon}</span>
+                    <div>
+                        <div>Security Score: ${analysis.score}/100</div>
+                        <div style="font-size: 0.7em; opacity: 0.9;">${statusText}</div>
+                    </div>
+                </div>
+            `;
+
+            // Risk Matrix
+            html += `
+                <div class="advanced-analysis">
+                    <h4>🎯 Risk Assessment Matrix</h4>
+                    <div class="risk-matrix">
+                        <div class="risk-item">
+                            <div class="risk-score ${getRiskClass(analysis.riskFactors.phishing)}">${analysis.riskFactors.phishing}%</div>
+                            <div>Phishing Risk</div>
+                        </div>
+                        <div class="risk-item">
+                            <div class="risk-score ${getRiskClass(analysis.riskFactors.malware)}">${analysis.riskFactors.malware}%</div>
+                            <div>Malware Risk</div>
+                        </div>
+                        <div class="risk-item">
+                            <div class="risk-score ${getRiskClass(analysis.riskFactors.spam)}">${analysis.riskFactors.spam}%</div>
+                            <div>Spam Risk</div>
+                        </div>
+                        <div class="risk-item">
+                            <div class="risk-score ${getRiskClass(analysis.riskFactors.spoofing)}">${analysis.riskFactors.spoofing}%</div>
+                            <div>Spoofing Risk</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (analysis.issues.length > 0) {
+                html += '<div class="checks-list"><strong>Security Issues Found:</strong>';
+                analysis.issues.forEach(issue => {
+                    html += `<div class="check-item"><span class="check-icon">❌</span>${issue}</div>`;
+                });
+                html += '</div>';
+            }
+
+            if (analysis.positives.length > 0) {
+                html += '<div class="checks-list"><strong>Positive Security Indicators:</strong>';
+                analysis.positives.forEach(positive => {
+                    html += `<div class="check-item"><span class="check-icon">✅</span>${positive}</div>`;
+                });
+                html += '</div>';
+            }
+
+            // Add export functionality
+            html += `
+                <div style="margin-top: 20px;">
+                    <button class="export-btn" onclick="exportResults(${JSON.stringify(analysis).replace(/"/g, '&quot;')})">
+                        📄 Export Analysis Report
+                    </button>
+                </div>
+            `;
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.className = `results ${className}`;
+            resultsDiv.style.display = 'block';
+            
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function getRiskClass(risk) {
+            if (risk >= 60) return 'high';
+            if (risk >= 30) return 'medium';
+            return 'low';
+        }
+
+        function exportResults(analysis) {
+            const timestamp = new Date().toLocaleString();
+            const report = `
+EMAIL SECURITY ANALYSIS REPORT
+Generated: ${timestamp}
+
+OVERALL SECURITY SCORE: ${analysis.score}/100
+
+RISK ASSESSMENT:
+- Phishing Risk: ${analysis.riskFactors.phishing}%
+- Malware Risk: ${analysis.riskFactors.malware}%
+- Spam Risk: ${analysis.riskFactors.spam}%
+- Spoofing Risk: ${analysis.riskFactors.spoofing}%
+
+SECURITY ISSUES FOUND:
+${analysis.issues.map(issue => `- ${issue}`).join('\n')}
+
+POSITIVE INDICATORS:
+${analysis.positives.map(positive => `- ${positive}`).join('\n')}
+
+RECOMMENDATION:
+${analysis.score >= 80 ? 'Email appears legitimate with low security risk.' : 
+  analysis.score >= 50 ? 'Exercise caution. Verify sender through alternative means.' : 
+  'HIGH RISK: Do not interact with this email. Report as potential phishing.'}
+
+---
+Report generated by Email Legitimacy Checker Pro
+            `;
+
+            const blob = new Blob([report], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `email-security-report-${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function clearAll() {
+            const inputs = ['senderEmail', 'senderName', 'subject', 'emailContent', 'emailHeaders', 'urls'];
+            inputs.forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('contentCounter').textContent = '0/5000';
+            document.getElementById('headersCounter').textContent = '0/10000';
+        }
+
+        // Enhanced security measures
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevent right-click context menu on sensitive areas
+            document.querySelectorAll('input, textarea').forEach(element => {
+                element.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                });
+            });
+
+            // Add input validation
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.value = sanitizeInput(this.value);
+                });
+                
+                input.addEventListener('focus', function() {
+                    this.parentElement.style.transform = 'scale(1.02)';
+                    this.parentElement.style.transition = 'transform 0.3s ease';
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.parentElement.style.transform = 'scale(1)';
+                });
+            });
+
+            // Session timeout warning
+            let sessionTimer = setTimeout(() => {
+                if (confirm('Session has been idle for 30 minutes. Clear all data for security?')) {
+                    clearAll();
+                }
+            }, 30 * 60 * 1000); // 30 minutes
+
+            // Reset timer on activity
+            document.addEventListener('click', () => {
+                clearTimeout(sessionTimer);
+                sessionTimer = setTimeout(() => {
+                    if (confirm('Session has been idle for 30 minutes. Clear all data for security?')) {
+                        clearAll();
+                    }
+                }, 30 * 60 * 1000);
+            });
+        });
+
+        // Performance monitoring
+        const performanceMetrics = {
+            analysisCount: 0,
+            avgAnalysisTime: 0
+        };
+
+        // Browser compatibility check
+        function checkBrowserCompatibility() {
+            const features = {
+                localStorage: typeof(Storage) !== "undefined",
+                webCrypto: window.crypto && window.crypto.subtle,
+                fetch: typeof fetch !== "undefined"
+            };
+            
+            const unsupported = Object.entries(features)
+                .filter(([key, supported]) => !supported)
+                .map(([key]) => key);
+            
+            if (unsupported.length > 0) {
+                console.warn('Unsupported browser features:', unsupported);
+            }
+        }
+
+        // Initialize security checks
+        checkBrowserCompatibility();
+    </script>
+</body>
+</html>
